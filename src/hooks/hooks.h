@@ -6,7 +6,7 @@ namespace Hooks {
 	void Install();
 
 	class DialogueItemConstructorCall :
-		Utilities::Singleton::ISingleton<DialogueItemConstructorCall> {
+		public Utilities::Singleton::ISingleton<DialogueItemConstructorCall> {
 	public:
 		void Install();
 
