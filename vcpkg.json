@@ -1,7 +1,7 @@
 {
-  "name": "replaceme",
+  "name": "consideratefollowers",
   "version-string": "1.0.0",
-  "description": "Template for SKSE plugin built using my commonlib. MIT License by default.",
+  "description": "General gameplay improvements for Skyrim SE - Followers won't talk over our current dialogue target.",
   "homepage": "",
   "license": "MIT",
   "dependencies": [
@@ -10,6 +10,7 @@
     "spdlog",
     "clib-util",
     "jsoncpp",
+    "simpleini",
     "xbyak"
   ],
   "builtin-baseline": "4f746bc66438fce2b900c3ba6094a483b871b045"

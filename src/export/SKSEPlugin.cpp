@@ -1,5 +1,6 @@
 #include "hooks/hooks.h"
-#include "Papyrus/papyrus.h"
+#include "settings/INISettings.h"
+#include "settings/JSONSettings.h"
 
 namespace
 {
@@ -64,6 +65,8 @@ static void MessageEventCallback(SKSE::MessagingInterface::Message* a_msg)
 {
 	switch (a_msg->type) {
 	case SKSE::MessagingInterface::kDataLoaded:
+		Settings::INI::Read();
+		Settings::JSON::Read();
 		break;
 	default:
 		break;
@@ -76,7 +79,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 	logger::info("{} v{}"sv, Plugin::NAME, Plugin::VERSION.string());
 
 	SKSE::Init(a_skse);
-	SKSE::AllocTrampoline(0);
+	SKSE::AllocTrampoline(14); // Calls: 1
 
 	const auto ver = a_skse->RuntimeVersion();
 	if (ver < SKSE::RUNTIME_1_6_1130) {
@@ -87,6 +90,5 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 	messaging->RegisterListener(&MessageEventCallback);
 
 	Hooks::Install();
-	SKSE::GetPapyrusInterface()->Register(Papyrus::RegisterFunctions);
 	return true;
 }
