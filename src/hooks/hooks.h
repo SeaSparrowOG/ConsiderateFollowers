@@ -18,6 +18,18 @@ namespace Hooks {
 			RE::TESTopicInfo* a_topicInfo,
 			RE::TESObjectREFR* a_speaker);
 
+		bool ShouldFollowerRespond(RE::Actor* a_speaker, RE::TESTopic* a_topic);
+
+		// This isn't perfect, but is better than closestConversation. The limitation is simple:
+		// Actor A starts talking, is closest.
+		// Actor B starts talking, is NOT closest.
+		// Player moves closer to Actor B before Actor B speaks again, and internally we will
+		// test against Actor A instead of B.
+		void UpdateInternalClosestConversation(RE::Actor* a_speaker);
+
 		inline static REL::Relocation<decltype(&CreateDialogueItem)> _createDialogueItem;
+
+		RE::Actor* closestSpeaker{ nullptr };
+		float maximumDistance{ 500.0f };
 	};
 }
