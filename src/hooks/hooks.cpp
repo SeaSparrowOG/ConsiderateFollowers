@@ -1,5 +1,7 @@
 #include "Hooks/hooks.h"
 
+#include "RE/Misc.h"
+
 namespace Hooks {
 	void DialogueItemConstructorCall::Install()
 	{
@@ -17,7 +19,6 @@ namespace Hooks {
 		RE::TESObjectREFR* a_speaker)
 	{
 		const auto response = _createDialogueItem(a_this, a_quest, a_topic, a_topicInfo, a_speaker);
-
 		if (a_speaker && a_speaker->As<RE::Actor>()) {
 			const auto speakerActor = a_speaker->As<RE::Actor>();
 			if (!speakerActor) {
@@ -25,15 +26,17 @@ namespace Hooks {
 			}
 
 			const auto singleton = DialogueItemConstructorCall::GetSingleton();
-			assert(singleton);
 			singleton->UpdateInternalClosestConversation(speakerActor);
 
-			if (speakerActor->IsPlayerTeammate() && singleton->ShouldFollowerRespond(speakerActor, a_topic)) {
-				return response;
+			if (speakerActor->IsPlayerTeammate()) {
+				if (singleton->ShouldFollowerRespond(speakerActor, a_topic)) {
+					return response;
+				}
+				else {
+					delete a_this;
+					return nullptr;
+				}
 			}
-
-			delete a_this; //is this needed?
-			return nullptr;
 		}
 		return response;
 	}
@@ -76,29 +79,44 @@ namespace Hooks {
 		const auto menuTopicManager = RE::MenuTopicManager::GetSingleton();
 		assert(menuTopicManager);
 		const auto currentPlayerDialogueTarget = menuTopicManager->speaker.get().get();
-		if (currentPlayerDialogueTarget && currentPlayerDialogueTarget == a_speaker) {
-			return true;
+		if (currentPlayerDialogueTarget && currentPlayerDialogueTarget != a_speaker) {
+			return false;
 		}
 
 		if (closestSpeaker && closestSpeaker->Is3DLoaded()) {
 			const auto player = RE::PlayerCharacter::GetSingleton();
 			assert(player);
 			const auto distance = player->GetDistance(closestSpeaker);
-			if (distance > maximumDistance) {
-				return true;
+			if (distance < maximumDistance && !closestSpeaker->QSpeakingDone()) {
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	void DialogueItemConstructorCall::UpdateInternalClosestConversation(RE::Actor* a_speaker)
 	{
+		if (a_speaker == RE::PlayerCharacter::GetSingleton()) {
+			return;
+		}
+
 		if (!a_speaker->IsPlayerTeammate()) {
 			const auto player = RE::PlayerCharacter::GetSingleton();
+			const auto speakerCharacter = a_speaker->As<RE::Character>();
+			if (!speakerCharacter) {
+				return;
+			}
+
 			assert(player);
 			bool shouldReplace = false;
-			if (!closestSpeaker || !closestSpeaker->Is3DLoaded()) {
+			const auto oldSpeakerDone = !RE::IsTalking(speakerCharacter);
+			if (oldSpeakerDone) {
 				shouldReplace = true;
+			}
+			if (!shouldReplace) {
+				if (!closestSpeaker || !closestSpeaker->Is3DLoaded()) {
+					shouldReplace = true;
+				}
 			}
 			if (!shouldReplace) {
 				const auto newDistance = player->GetDistance(a_speaker);
