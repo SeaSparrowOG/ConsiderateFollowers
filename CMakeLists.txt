@@ -69,3 +69,10 @@ if(DEFINED OUTPUT_FOLDER)
         VERBATIM
     )
 endif()
+
+set(DATA_DIR "${PROJECT_SOURCE_DIR}/data")
+
+install(
+	FILES "${DATA_DIR}/SKSE/Plugins/ConsiderateFollowers.ini"
+	DESTINATION "SKSE/Plugins"
+)

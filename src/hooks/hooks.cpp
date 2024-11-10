@@ -11,6 +11,38 @@ namespace Hooks {
 		_createDialogueItem = trampoline.write_call<5>(playerGoldTarget.address(), &CreateDialogueItem);
 	}
 
+	void DialogueItemConstructorCall::SetMaxDistance(double a_newDistance)
+	{
+		if (a_newDistance < 0.0) {
+			a_newDistance = 0.0;
+		}
+		else if (a_newDistance > 2000.0f) {
+			a_newDistance = 2000.0f;
+		}
+
+		maximumDistance = static_cast<float>(a_newDistance);
+	}
+
+	void DialogueItemConstructorCall::RegisterWhitelistedActor(const RE::TESNPC* a_actor)
+	{
+		assert(a_actor);
+		if (std::find(whitelistedActors.begin(), whitelistedActors.end(), a_actor) != whitelistedActors.end()) {
+			return;
+		}
+
+		whitelistedActors.push_back(a_actor);
+	}
+
+	void DialogueItemConstructorCall::RegisterWhitelistedQuest(const RE::TESQuest* a_quest)
+	{
+		assert(a_quest);
+		if (std::find(whitelistedQuests.begin(), whitelistedQuests.end(), a_quest) != whitelistedQuests.end()) {
+			return;
+		}
+
+		whitelistedQuests.push_back(a_quest);
+	}
+
 	RE::DialogueItem* DialogueItemConstructorCall::CreateDialogueItem(
 		RE::DialogueItem* a_this, 
 		RE::TESQuest* a_quest,
@@ -19,16 +51,21 @@ namespace Hooks {
 		RE::TESObjectREFR* a_speaker)
 	{
 		const auto response = _createDialogueItem(a_this, a_quest, a_topic, a_topicInfo, a_speaker);
+		const auto singleton = DialogueItemConstructorCall::GetSingleton();
+
 		if (a_speaker && a_speaker->As<RE::Actor>()) {
 			const auto speakerActor = a_speaker->As<RE::Actor>();
-			if (!speakerActor) {
-				return response;
-			}
+			const auto speakerBase = speakerActor->GetActorBase();
 
-			const auto singleton = DialogueItemConstructorCall::GetSingleton();
 			singleton->UpdateInternalClosestConversation(speakerActor);
 
 			if (speakerActor->IsPlayerTeammate()) {
+				if (std::find(singleton->whitelistedQuests.begin(), singleton->whitelistedQuests.end(), a_quest) != singleton->whitelistedQuests.end()) {
+					return response;
+				}
+				if (std::find(singleton->whitelistedActors.begin(), singleton->whitelistedActors.end(), speakerBase) != singleton->whitelistedActors.end()) {
+					return response;
+				}
 				if (singleton->ShouldFollowerRespond(speakerActor, a_topic)) {
 					return response;
 				}
@@ -83,7 +120,9 @@ namespace Hooks {
 			return false;
 		}
 
-		if (closestSpeaker && closestSpeaker->Is3DLoaded()) {
+		const auto closestSpeakingCharacter = closestSpeaker->As<RE::Character>();
+		bool isClosestActorSpeaking = closestSpeakingCharacter ? RE::IsTalking(closestSpeakingCharacter) : false;
+		if (isClosestActorSpeaking && closestSpeaker && closestSpeaker->Is3DLoaded()) {
 			const auto player = RE::PlayerCharacter::GetSingleton();
 			assert(player);
 			const auto distance = player->GetDistance(closestSpeaker);

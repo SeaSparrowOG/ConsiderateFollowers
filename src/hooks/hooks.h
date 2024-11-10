@@ -9,6 +9,9 @@ namespace Hooks {
 		public Utilities::Singleton::ISingleton<DialogueItemConstructorCall> {
 	public:
 		void Install();
+		void SetMaxDistance(double a_newDistance);
+		void RegisterWhitelistedActor(const RE::TESNPC* a_actor);
+		void RegisterWhitelistedQuest(const RE::TESQuest* a_quest);
 
 	private:
 		static RE::DialogueItem* CreateDialogueItem(
@@ -31,5 +34,8 @@ namespace Hooks {
 
 		RE::Actor* closestSpeaker{ nullptr };
 		float maximumDistance{ 500.0f };
+
+		std::vector<const RE::TESNPC*> whitelistedActors;
+		std::vector<const RE::TESQuest*> whitelistedQuests;
 	};
 }
