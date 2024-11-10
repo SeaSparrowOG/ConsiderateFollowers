@@ -76,3 +76,5 @@ install(
 	FILES "${DATA_DIR}/SKSE/Plugins/ConsiderateFollowers.ini"
 	DESTINATION "SKSE/Plugins"
 )
+
+include(components.cmake)
