@@ -47,10 +47,10 @@ jobs:
 
     - name: Install
       run: |
-        cmake --install ${{ github.workspace }}/build --component "SKSEPlugin" --config ${{ env.BUILD_TYPE }} --prefix ${{ github.workspace }}/ReleaseBuild/SKSE/Plugins
+        cmake --install ${{ github.workspace }}/build --component "SKSEPlugin" --config ${{ env.BUILD_TYPE }} --prefix ${{ github.workspace }}/ReleaseBuild
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: StaffEnchanting
+        name: ConsiderateFollowers
         path: ${{ github.workspace }}/ReleaseBuild
