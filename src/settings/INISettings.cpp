@@ -13,6 +13,8 @@ namespace Settings::INI
 		ini.LoadFile(fmt::format(R"(.\Data\SKSE\Plugins\{}.ini)", Plugin::NAME).c_str());
 
 		const auto newDistance = ini.GetDoubleValue("General", "fMaxConversationDistance", 400.0);
+		const auto pileup = ini.GetBoolValue("General", "bPreventFollowerPileup", false);
 		singleton->SetMaxDistance(newDistance);
+		singleton->SetFollowerPileUp(pileup);
 	}
 }

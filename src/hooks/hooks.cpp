@@ -23,6 +23,11 @@ namespace Hooks {
 		maximumDistance = static_cast<float>(a_newDistance);
 	}
 
+	void DialogueItemConstructorCall::SetFollowerPileUp(bool a_pileup)
+	{
+		preventFollowerPileup = a_pileup;
+	}
+
 	void DialogueItemConstructorCall::RegisterWhitelistedActor(const RE::TESNPC* a_actor)
 	{
 		assert(a_actor);
@@ -120,13 +125,13 @@ namespace Hooks {
 			return false;
 		}
 
-		const auto closestSpeakingCharacter = closestSpeaker->As<RE::Character>();
+		const auto closestSpeakingCharacter = closestSpeaker ? closestSpeaker->As<RE::Character>() : nullptr;
 		bool isClosestActorSpeaking = closestSpeakingCharacter ? RE::IsTalking(closestSpeakingCharacter) : false;
 		if (isClosestActorSpeaking && closestSpeaker && closestSpeaker->Is3DLoaded()) {
 			const auto player = RE::PlayerCharacter::GetSingleton();
 			assert(player);
 			const auto distance = player->GetDistance(closestSpeaker);
-			if (distance < maximumDistance && !closestSpeaker->QSpeakingDone()) {
+			if (distance < maximumDistance) {
 				return false;
 			}
 		}
@@ -139,7 +144,7 @@ namespace Hooks {
 			return;
 		}
 
-		if (!a_speaker->IsPlayerTeammate()) {
+		if (preventFollowerPileup || !a_speaker->IsPlayerTeammate()) {
 			const auto player = RE::PlayerCharacter::GetSingleton();
 			const auto speakerCharacter = a_speaker->As<RE::Character>();
 			if (!speakerCharacter) {

@@ -10,6 +10,7 @@ namespace Hooks {
 	public:
 		void Install();
 		void SetMaxDistance(double a_newDistance);
+		void SetFollowerPileUp(bool a_pileup);
 		void RegisterWhitelistedActor(const RE::TESNPC* a_actor);
 		void RegisterWhitelistedQuest(const RE::TESQuest* a_quest);
 
@@ -34,7 +35,7 @@ namespace Hooks {
 
 		RE::Actor* closestSpeaker{ nullptr };
 		float maximumDistance{ 500.0f };
-
+		bool preventFollowerPileup{ false };
 		std::vector<const RE::TESNPC*> whitelistedActors;
 		std::vector<const RE::TESQuest*> whitelistedQuests;
 	};
