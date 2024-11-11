@@ -34,14 +34,12 @@ namespace Hooks {
 			}
 
 			PendingDialogueResponse Process() {
-				logger::debug("Processing...");
 				const auto speakerCharacter = speaker->As<RE::Character>();
 				const auto speakerActor = speaker->As<RE::Actor>();
 				if (RE::IsTalking(speakerCharacter)) {
 					return kSkip;
 				}
 
-				logger::debug("Accepted!");
 				Papyrus::EventDispatcher::GetSingleton()->followerShouldCommentate.QueueEvent(speakerActor, topic);
 				return kCompleted;
 			}

@@ -11,7 +11,6 @@ namespace Papyrus
 			return false;
 		}
 		EventDispatcher::GetSingleton()->AddListener(a_form);
-		logger::debug("Registered form for events");
 		return true;
 	}
 

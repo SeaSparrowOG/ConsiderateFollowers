@@ -16,7 +16,6 @@ namespace Papyrus {
 	public:
 		void AddListener(const RE::TESForm* a_form) {
 			followerShouldCommentate.Register(a_form);
-			logger::debug("Request approved");
 		}
 
 		SKSE::RegistrationSet<RE::Actor*, RE::TESTopic*> followerShouldCommentate{ "OnFollowerShouldComment"sv };

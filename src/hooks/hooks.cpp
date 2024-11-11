@@ -52,12 +52,10 @@ namespace Hooks {
 			return false;
 		}
 
-		logger::debug("Releasing dialogue...");
 		const auto menuTopicManager = RE::MenuTopicManager::GetSingleton();
 		assert(menuTopicManager);
 		const auto currentPlayerDialogueTarget = menuTopicManager->speaker.get().get();
 		if (currentPlayerDialogueTarget) {
-			logger::debug("  ...but player is in dialogue");
 			return false;
 		}
 
@@ -68,7 +66,6 @@ namespace Hooks {
 			assert(player);
 			const auto distance = player->GetDistance(closestSpeaker);
 			if (distance < maximumDistance) {
-				logger::debug("  ...but player is listening to dialogue");
 				return false;
 			}
 		}
@@ -80,7 +77,6 @@ namespace Hooks {
 
 		for (auto it = queuedLines.begin(); it != queuedLines.end(); ++it) {
 			if ((*it).Process() == kCompleted) {
-				logger::debug("  ...{} spoke!", (*it).speaker->GetName());
 				queuedLines.erase(it);
 				return true;
 			}
@@ -126,7 +122,6 @@ namespace Hooks {
 						logger::error("Caught {}", e.what());
 						return response;
 					}
-					RE::DebugNotification("Suppressed dialogue");
 					delete a_this;
 					return nullptr;
 				}
