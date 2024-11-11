@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RE/Misc.h"
+#include "papyrus/papyrus.h"
 #include "utilities/utilities.h"
 
 namespace Hooks {
@@ -14,7 +16,47 @@ namespace Hooks {
 		void RegisterWhitelistedActor(const RE::TESNPC* a_actor);
 		void RegisterWhitelistedQuest(const RE::TESQuest* a_quest);
 
+		bool ReleaseDialogueIfPossible();
+		bool IsClosestActorSpeaking();
+
 	private:
+		enum PendingDialogueResponse {
+			kSkip,
+			kCompleted
+		};
+
+		struct PendingDialogue {
+			RE::TESObjectREFR* speaker;
+			RE::TESTopic*      topic;
+
+			PendingDialogue(RE::TESObjectREFR* a_speaker, RE::TESTopic* a_topic) {
+				this->speaker = a_speaker;
+				this->topic = a_topic;
+			}
+
+			PendingDialogueResponse Process() {
+				const auto speakerCharacter = speaker->As<RE::Character>();
+				const auto speakerActor = speaker->As<RE::Actor>();
+				if (RE::IsTalking(speakerCharacter)) {
+					return kSkip;
+				}
+
+				Papyrus::EventDispatcher::GetSingleton()->followerShouldCommentate.QueueEvent(speakerActor, topic);
+				return kCompleted;
+			}
+
+			bool HasValidData() {
+				const auto speakerCharacter = speaker->As<RE::Character>();
+				if (!speakerCharacter) {
+					return false;
+				}
+				if (!speakerCharacter->Is3DLoaded() || !speakerCharacter->IsPlayerTeammate()) {
+					return false;
+				}
+				return true;
+			}
+		};
+
 		static RE::DialogueItem* CreateDialogueItem(
 			RE::DialogueItem* a_dialogueItem,
 			RE::TESQuest* a_quest,
@@ -38,5 +80,35 @@ namespace Hooks {
 		bool preventFollowerPileup{ false };
 		std::vector<const RE::TESNPC*> whitelistedActors;
 		std::vector<const RE::TESQuest*> whitelistedQuests;
+		std::vector<PendingDialogue> queuedLines;
+	};
+
+	struct UpdateVFunc {
+		static void Install() {
+			stl::write_vfunc<RE::PlayerCharacter, UpdateVFunc>();
+		}
+
+		static void thunk(RE::PlayerCharacter* a_this, float a_delta) {
+			func(a_this, a_delta);
+			const auto ui = RE::UI::GetSingleton();
+			assert(ui);
+			if (ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || DialogueItemConstructorCall::GetSingleton()->IsClosestActorSpeaking()) {
+				internalCounter = 0.0f;
+			}
+			else {
+				internalCounter += a_delta;
+
+				if (internalCounter >= 3.0f) {
+					DialogueItemConstructorCall::GetSingleton()->ReleaseDialogueIfPossible();
+					internalCounter = 0.0f;
+				}
+			}
+		}
+
+		inline static REL::Relocation<decltype(UpdateVFunc::thunk)> func;
+		static constexpr std::size_t idx{ 0xAD }; //Update
+
+		inline static float internalCounter{ 0.0f };
+
 	};
 }

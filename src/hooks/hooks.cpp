@@ -1,7 +1,5 @@
 #include "Hooks/hooks.h"
 
-#include "RE/Misc.h"
-
 namespace Hooks {
 	void DialogueItemConstructorCall::Install()
 	{
@@ -48,6 +46,59 @@ namespace Hooks {
 		whitelistedQuests.push_back(a_quest);
 	}
 
+	bool DialogueItemConstructorCall::ReleaseDialogueIfPossible()
+	{
+		if (queuedLines.empty()) {
+			return false;
+		}
+
+		const auto menuTopicManager = RE::MenuTopicManager::GetSingleton();
+		assert(menuTopicManager);
+		const auto currentPlayerDialogueTarget = menuTopicManager->speaker.get().get();
+		if (currentPlayerDialogueTarget) {
+			return false;
+		}
+
+		const auto closestSpeakingCharacter = closestSpeaker ? closestSpeaker->As<RE::Character>() : nullptr;
+		bool isClosestActorSpeaking = closestSpeakingCharacter ? RE::IsTalking(closestSpeakingCharacter) : false;
+		if (isClosestActorSpeaking && closestSpeaker && closestSpeaker->Is3DLoaded()) {
+			const auto player = RE::PlayerCharacter::GetSingleton();
+			assert(player);
+			const auto distance = player->GetDistance(closestSpeaker);
+			if (distance < maximumDistance) {
+				return false;
+			}
+		}
+
+		std::erase_if(queuedLines, [](auto& pair)
+			{
+				return !pair.HasValidData();
+			});
+
+		for (auto it = queuedLines.begin(); it != queuedLines.end(); ++it) {
+			if ((*it).Process() == kCompleted) {
+				queuedLines.erase(it);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool DialogueItemConstructorCall::IsClosestActorSpeaking()
+	{
+		if (!closestSpeaker || !closestSpeaker->Is3DLoaded()) {
+			return false;
+		}
+
+		const auto speakerCharacter = closestSpeaker->As<RE::Character>();
+		if (!speakerCharacter) { 
+			return false;
+		}
+
+		return (preventFollowerPileup || !closestSpeaker->IsPlayerTeammate())
+			&& RE::IsTalking(speakerCharacter);
+	}
+
 	RE::DialogueItem* DialogueItemConstructorCall::CreateDialogueItem(
 		RE::DialogueItem* a_this, 
 		RE::TESQuest* a_quest,
@@ -55,11 +106,10 @@ namespace Hooks {
 		RE::TESTopicInfo* a_topicInfo,
 		RE::TESObjectREFR* a_speaker)
 	{
-		const auto response = _createDialogueItem(a_this, a_quest, a_topic, a_topicInfo, a_speaker);
+		auto response = _createDialogueItem(a_this, a_quest, a_topic, a_topicInfo, a_speaker);
 		const auto singleton = DialogueItemConstructorCall::GetSingleton();
-
 		if (a_speaker && a_speaker->As<RE::Actor>()) {
-			const auto speakerActor = a_speaker->As<RE::Actor>();
+			auto* speakerActor = a_speaker->As<RE::Actor>();
 			const auto speakerBase = speakerActor->GetActorBase();
 
 			singleton->UpdateInternalClosestConversation(speakerActor);
@@ -75,6 +125,19 @@ namespace Hooks {
 					return response;
 				}
 				else {
+					try {
+						for (const auto& queued : singleton->queuedLines) {
+							if (queued.speaker == speakerActor) {
+								delete a_this;
+								return nullptr;
+							}
+						}
+						singleton->queuedLines.push_back(std::move(PendingDialogue(speakerActor, a_topic)));
+					}
+					catch (const std::exception& e) {
+						logger::error("Caught {}", e.what());
+						return response;
+					}
 					delete a_this;
 					return nullptr;
 				}
@@ -179,5 +242,6 @@ namespace Hooks {
 	void Install()
 	{
 		DialogueItemConstructorCall::GetSingleton()->Install();
+		UpdateVFunc::Install();
 	}
 }
