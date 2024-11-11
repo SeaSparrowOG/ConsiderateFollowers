@@ -11,7 +11,7 @@ namespace RE
 
 		namespace TESObjectREFR
 		{
-			constexpr auto Say = REL::ID(20206);
+			constexpr auto Say = REL::ID(19518);
 		}
 	}
 }

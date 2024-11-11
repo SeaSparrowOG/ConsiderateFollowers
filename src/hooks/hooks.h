@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RE/Misc.h"
 #include "utilities/utilities.h"
 
 namespace Hooks {
@@ -17,6 +18,55 @@ namespace Hooks {
 		bool ReleaseDialogueIfPossible();
 
 	private:
+		enum PendingDialogueResponse {
+			kDelete,
+			kSkip,
+			kCompleted
+		};
+
+		struct PendingDialogue {
+			RE::TESObjectREFR*       speaker;
+			RE::DialogueItem*        dialogue;
+			RE::TESTopic*            topic;
+			RE::BSISoundOutputModel* model;
+
+			PendingDialogue(RE::Character* a_speaker, RE::DialogueItem* a_dialogue, RE::TESTopic* a_topic) {
+				const auto defaultObjectManager = RE::BGSDefaultObjectManager::GetSingleton();
+				assert(defaultObjectManager);
+
+				auto dialogueModel = defaultObjectManager->GetObject<RE::BSISoundOutputModel>(RE::DEFAULT_OBJECT::kDialogueOutputModel3D);
+				if (!dialogueModel) {
+					throw new std::exception("Failed to get a default object");
+				}
+
+				this->model = dialogueModel;
+				this->dialogue = a_dialogue;
+				this->speaker = a_speaker;
+				this->topic = a_topic;
+			}
+
+			PendingDialogueResponse Process() {
+				const auto speakerCharacter = speaker->As<RE::Character>();
+				if (RE::IsTalking(speakerCharacter)) {
+					return kSkip;
+				}
+				
+				RE::Say(speaker, model, topic, nullptr, dialogue);
+				return kCompleted;
+			}
+
+			bool HasValidData() {
+				const auto speakerCharacter = speaker->As<RE::Character>();
+				if (!speakerCharacter) {
+					return false;
+				}
+				if (!speakerCharacter->Is3DLoaded() || !speakerCharacter->IsPlayerTeammate()) {
+					return false;
+				}
+				return true;
+			}
+		};
+
 		static RE::DialogueItem* CreateDialogueItem(
 			RE::DialogueItem* a_dialogueItem,
 			RE::TESQuest* a_quest,
@@ -40,7 +90,7 @@ namespace Hooks {
 		bool preventFollowerPileup{ false };
 		std::vector<const RE::TESNPC*> whitelistedActors;
 		std::vector<const RE::TESQuest*> whitelistedQuests;
-		std::vector<std::pair<RE::Actor*, RE::DialogueItem*>> queuedLines;
+		std::vector<PendingDialogue> queuedLines;
 	};
 
 	struct UpdateVFunc {

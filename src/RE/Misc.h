@@ -11,10 +11,15 @@ namespace RE
 		return func(a_character);
 	}
 
-	inline bool Say(TESObjectREFR* a_this, DialogueItem* a_line)
+	inline void Say(
+		TESObjectREFR* a_speaker,
+		BSISoundOutputModel* a_model,
+		TESTopic* a_topic,
+		PlayerCharacter* a_player,
+		DialogueItem* a_dialogue)
 	{
 		using func_t = decltype(&Say);
 		static REL::Relocation<func_t> func{ RE::Offset::TESObjectREFR::Say };
-		return func(a_this, a_line);
+		func(a_speaker, a_model, a_topic, a_player, a_dialogue);
 	}
 }

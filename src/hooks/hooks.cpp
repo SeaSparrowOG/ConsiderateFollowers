@@ -1,7 +1,5 @@
 #include "Hooks/hooks.h"
 
-#include "RE/Misc.h"
-
 namespace Hooks {
 	void DialogueItemConstructorCall::Install()
 	{
@@ -50,10 +48,16 @@ namespace Hooks {
 
 	bool DialogueItemConstructorCall::ReleaseDialogueIfPossible()
 	{
+		if (queuedLines.empty()) {
+			return false;
+		}
+
+		logger::debug("Releasing dialogue...");
 		const auto menuTopicManager = RE::MenuTopicManager::GetSingleton();
 		assert(menuTopicManager);
 		const auto currentPlayerDialogueTarget = menuTopicManager->speaker.get().get();
 		if (currentPlayerDialogueTarget) {
+			logger::debug("  ...but player is in dialogue");
 			return false;
 		}
 
@@ -64,20 +68,21 @@ namespace Hooks {
 			assert(player);
 			const auto distance = player->GetDistance(closestSpeaker);
 			if (distance < maximumDistance) {
+				logger::debug("  ...but player is listening to dialogue");
 				return false;
 			}
 		}
 
-		for (auto it = queuedLines.rbegin(); it != queuedLines.rend(); ++it) {
-			const auto pair = *it;
-			if (!pair.first || !pair.second) {
-				it = std::vector<std::pair<RE::Actor*, RE::DialogueItem*>>::reverse_iterator(queuedLines.erase((it + 1).base()));
-				continue;
-			}
+		std::erase_if(queuedLines, [](auto& pair)
+			{
+				return !pair.HasValidData();
+			});
 
-			RE::Say(pair.first, pair.second);
-			it = std::vector<std::pair<RE::Actor*, RE::DialogueItem*>>::reverse_iterator(queuedLines.erase((it + 1).base()));
-			return true;
+		for (auto it = queuedLines.begin(); it != queuedLines.end(); ++it) {
+			if ((*it).Process() == kCompleted) {
+				logger::debug("  ...{} spoke!", (*it).speaker->GetName());
+				return true;
+			}
 		}
 		return false;
 	}
@@ -89,11 +94,11 @@ namespace Hooks {
 		RE::TESTopicInfo* a_topicInfo,
 		RE::TESObjectREFR* a_speaker)
 	{
-		const auto response = _createDialogueItem(a_this, a_quest, a_topic, a_topicInfo, a_speaker);
+		auto response = _createDialogueItem(a_this, a_quest, a_topic, a_topicInfo, a_speaker);
 		const auto singleton = DialogueItemConstructorCall::GetSingleton();
 
 		if (a_speaker && a_speaker->As<RE::Actor>()) {
-			const auto speakerActor = a_speaker->As<RE::Actor>();
+			auto* speakerActor = a_speaker->As<RE::Actor>();
 			const auto speakerBase = speakerActor->GetActorBase();
 
 			singleton->UpdateInternalClosestConversation(speakerActor);
@@ -109,6 +114,19 @@ namespace Hooks {
 					return response;
 				}
 				else {
+					const auto pendingSpeaker = speakerActor->As<RE::Character>();
+					if (!pendingSpeaker) {
+						return response;
+					}
+
+					try {
+						singleton->queuedLines.push_back(std::move(PendingDialogue(pendingSpeaker, response, a_topic)));
+					}
+					catch (const std::exception& e) {
+						logger::error("Caught {}", e.what());
+						return response;
+					}
+					RE::DebugNotification("Suppressed dialogue");
 					delete a_this;
 					return nullptr;
 				}
@@ -213,5 +231,6 @@ namespace Hooks {
 	void Install()
 	{
 		DialogueItemConstructorCall::GetSingleton()->Install();
+		UpdateVFunc::Install();
 	}
 }
