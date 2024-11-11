@@ -88,6 +88,7 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 
 	const auto messaging = SKSE::GetMessagingInterface();
 	messaging->RegisterListener(&MessageEventCallback);
+	SKSE::GetPapyrusInterface()->Register(Papyrus::RegisterFunctions);
 
 	Hooks::Install();
 	return true;

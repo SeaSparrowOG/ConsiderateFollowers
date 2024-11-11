@@ -13,7 +13,7 @@ namespace RE
 
 	inline void Say(
 		TESObjectREFR* a_speaker,
-		BSISoundOutputModel* a_model,
+		BSSoundHandle a_model,
 		TESTopic* a_topic,
 		PlayerCharacter* a_player,
 		DialogueItem* a_dialogue)

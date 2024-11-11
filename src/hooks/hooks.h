@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RE/Misc.h"
+#include "papyrus/papyrus.h"
 #include "utilities/utilities.h"
 
 namespace Hooks {
@@ -19,39 +20,29 @@ namespace Hooks {
 
 	private:
 		enum PendingDialogueResponse {
-			kDelete,
 			kSkip,
 			kCompleted
 		};
 
 		struct PendingDialogue {
-			RE::TESObjectREFR*       speaker;
-			RE::DialogueItem*        dialogue;
-			RE::TESTopic*            topic;
-			RE::BSISoundOutputModel* model;
+			RE::TESObjectREFR* speaker;
+			RE::TESTopic*      topic;
 
-			PendingDialogue(RE::Character* a_speaker, RE::DialogueItem* a_dialogue, RE::TESTopic* a_topic) {
-				const auto defaultObjectManager = RE::BGSDefaultObjectManager::GetSingleton();
-				assert(defaultObjectManager);
-
-				auto dialogueModel = defaultObjectManager->GetObject<RE::BSISoundOutputModel>(RE::DEFAULT_OBJECT::kDialogueOutputModel3D);
-				if (!dialogueModel) {
-					throw new std::exception("Failed to get a default object");
-				}
-
-				this->model = dialogueModel;
-				this->dialogue = a_dialogue;
+			PendingDialogue(RE::TESObjectREFR* a_speaker, RE::TESTopic* a_topic) {
 				this->speaker = a_speaker;
 				this->topic = a_topic;
 			}
 
 			PendingDialogueResponse Process() {
+				logger::debug("Processing...");
 				const auto speakerCharacter = speaker->As<RE::Character>();
+				const auto speakerActor = speaker->As<RE::Actor>();
 				if (RE::IsTalking(speakerCharacter)) {
 					return kSkip;
 				}
-				
-				RE::Say(speaker, model, topic, nullptr, dialogue);
+
+				logger::debug("Accepted!");
+				Papyrus::EventDispatcher::GetSingleton()->followerShouldCommentate.QueueEvent(speakerActor, topic);
 				return kCompleted;
 			}
 

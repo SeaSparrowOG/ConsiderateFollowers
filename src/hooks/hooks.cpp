@@ -81,6 +81,7 @@ namespace Hooks {
 		for (auto it = queuedLines.begin(); it != queuedLines.end(); ++it) {
 			if ((*it).Process() == kCompleted) {
 				logger::debug("  ...{} spoke!", (*it).speaker->GetName());
+				queuedLines.erase(it);
 				return true;
 			}
 		}
@@ -96,7 +97,6 @@ namespace Hooks {
 	{
 		auto response = _createDialogueItem(a_this, a_quest, a_topic, a_topicInfo, a_speaker);
 		const auto singleton = DialogueItemConstructorCall::GetSingleton();
-
 		if (a_speaker && a_speaker->As<RE::Actor>()) {
 			auto* speakerActor = a_speaker->As<RE::Actor>();
 			const auto speakerBase = speakerActor->GetActorBase();
@@ -120,7 +120,7 @@ namespace Hooks {
 					}
 
 					try {
-						singleton->queuedLines.push_back(std::move(PendingDialogue(pendingSpeaker, response, a_topic)));
+						singleton->queuedLines.push_back(std::move(PendingDialogue(pendingSpeaker, a_topic)));
 					}
 					catch (const std::exception& e) {
 						logger::error("Caught {}", e.what());
