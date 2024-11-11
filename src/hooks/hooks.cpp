@@ -48,6 +48,40 @@ namespace Hooks {
 		whitelistedQuests.push_back(a_quest);
 	}
 
+	bool DialogueItemConstructorCall::ReleaseDialogueIfPossible()
+	{
+		const auto menuTopicManager = RE::MenuTopicManager::GetSingleton();
+		assert(menuTopicManager);
+		const auto currentPlayerDialogueTarget = menuTopicManager->speaker.get().get();
+		if (currentPlayerDialogueTarget) {
+			return false;
+		}
+
+		const auto closestSpeakingCharacter = closestSpeaker ? closestSpeaker->As<RE::Character>() : nullptr;
+		bool isClosestActorSpeaking = closestSpeakingCharacter ? RE::IsTalking(closestSpeakingCharacter) : false;
+		if (isClosestActorSpeaking && closestSpeaker && closestSpeaker->Is3DLoaded()) {
+			const auto player = RE::PlayerCharacter::GetSingleton();
+			assert(player);
+			const auto distance = player->GetDistance(closestSpeaker);
+			if (distance < maximumDistance) {
+				return false;
+			}
+		}
+
+		for (auto it = queuedLines.rbegin(); it != queuedLines.rend(); ++it) {
+			const auto pair = *it;
+			if (!pair.first || !pair.second) {
+				it = std::vector<std::pair<RE::Actor*, RE::DialogueItem*>>::reverse_iterator(queuedLines.erase((it + 1).base()));
+				continue;
+			}
+
+			RE::Say(pair.first, pair.second);
+			it = std::vector<std::pair<RE::Actor*, RE::DialogueItem*>>::reverse_iterator(queuedLines.erase((it + 1).base()));
+			return true;
+		}
+		return false;
+	}
+
 	RE::DialogueItem* DialogueItemConstructorCall::CreateDialogueItem(
 		RE::DialogueItem* a_this, 
 		RE::TESQuest* a_quest,

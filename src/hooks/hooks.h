@@ -14,6 +14,8 @@ namespace Hooks {
 		void RegisterWhitelistedActor(const RE::TESNPC* a_actor);
 		void RegisterWhitelistedQuest(const RE::TESQuest* a_quest);
 
+		bool ReleaseDialogueIfPossible();
+
 	private:
 		static RE::DialogueItem* CreateDialogueItem(
 			RE::DialogueItem* a_dialogueItem,
@@ -38,5 +40,28 @@ namespace Hooks {
 		bool preventFollowerPileup{ false };
 		std::vector<const RE::TESNPC*> whitelistedActors;
 		std::vector<const RE::TESQuest*> whitelistedQuests;
+		std::vector<std::pair<RE::Actor*, RE::DialogueItem*>> queuedLines;
+	};
+
+	struct UpdateVFunc {
+		static void Install() {
+			stl::write_vfunc<RE::PlayerCharacter, UpdateVFunc>();
+		}
+
+		static void thunk(RE::PlayerCharacter* a_this, float a_delta) {
+			func(a_this, a_delta);
+			internalCounter += a_delta;
+
+			if (internalCounter >= 3.0f) {
+				DialogueItemConstructorCall::GetSingleton()->ReleaseDialogueIfPossible();
+				internalCounter = 0.0f;
+			}
+		}
+
+		inline static REL::Relocation<decltype(UpdateVFunc::thunk)> func;
+		static constexpr std::size_t idx{ 0xAD }; //Update
+
+		inline static float internalCounter{ 0.0f };
+
 	};
 }

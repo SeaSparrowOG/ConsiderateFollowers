@@ -8,5 +8,10 @@ namespace RE
 		{
 			constexpr auto IsTalking = REL::ID(37266);
 		}
+
+		namespace TESObjectREFR
+		{
+			constexpr auto Say = REL::ID(20206);
+		}
 	}
 }
