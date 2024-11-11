@@ -77,4 +77,14 @@ install(
 	DESTINATION "SKSE/Plugins"
 )
 
+install(
+	FILES "${DATA_DIR}/SKSE/Plugins/ConsiderateFollowers.esp"
+	DESTINATION "."
+)
+
+install(
+	FILES "${DATA_DIR}/SKSE/Plugins/ConsiderateFollowers.bsa"
+	DESTINATION "."
+)
+
 include(components.cmake)

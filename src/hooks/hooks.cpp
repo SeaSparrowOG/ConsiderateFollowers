@@ -84,6 +84,21 @@ namespace Hooks {
 		return false;
 	}
 
+	bool DialogueItemConstructorCall::IsClosestActorSpeaking()
+	{
+		if (!closestSpeaker || !closestSpeaker->Is3DLoaded()) {
+			return false;
+		}
+
+		const auto speakerCharacter = closestSpeaker->As<RE::Character>();
+		if (!speakerCharacter) { 
+			return false;
+		}
+
+		return (preventFollowerPileup || !closestSpeaker->IsPlayerTeammate())
+			&& RE::IsTalking(speakerCharacter);
+	}
+
 	RE::DialogueItem* DialogueItemConstructorCall::CreateDialogueItem(
 		RE::DialogueItem* a_this, 
 		RE::TESQuest* a_quest,
@@ -110,13 +125,14 @@ namespace Hooks {
 					return response;
 				}
 				else {
-					const auto pendingSpeaker = speakerActor->As<RE::Character>();
-					if (!pendingSpeaker) {
-						return response;
-					}
-
 					try {
-						singleton->queuedLines.push_back(std::move(PendingDialogue(pendingSpeaker, a_topic)));
+						for (const auto& queued : singleton->queuedLines) {
+							if (queued.speaker == speakerActor) {
+								delete a_this;
+								return nullptr;
+							}
+						}
+						singleton->queuedLines.push_back(std::move(PendingDialogue(speakerActor, a_topic)));
 					}
 					catch (const std::exception& e) {
 						logger::error("Caught {}", e.what());
