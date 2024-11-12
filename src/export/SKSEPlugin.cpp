@@ -66,7 +66,11 @@ static void MessageEventCallback(SKSE::MessagingInterface::Message* a_msg)
 	switch (a_msg->type) {
 	case SKSE::MessagingInterface::kDataLoaded:
 		Settings::INI::Read();
+		logger::info("Finished applying INI settings.");
 		Settings::JSON::Read();
+		logger::info("Finished reading JSON settings.");
+		logger::info("________________________________________________");
+		logger::info("Finished startup tasks. Please enjoy your game!");
 		break;
 	default:
 		break;
@@ -77,7 +81,8 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 {
 	InitializeLog();
 	logger::info("{} v{}"sv, Plugin::NAME, Plugin::VERSION.string());
-
+	logger::info("Author: SeaSparrow");
+	logger::info("________________________________________________");
 	SKSE::Init(a_skse);
 	SKSE::AllocTrampoline(14); // Calls: 1
 
@@ -89,7 +94,9 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 	const auto messaging = SKSE::GetMessagingInterface();
 	messaging->RegisterListener(&MessageEventCallback);
 	SKSE::GetPapyrusInterface()->Register(Papyrus::RegisterFunctions);
-
+	logger::info("Installed new Papyrus functions.");
 	Hooks::Install();
+	logger::info("Installed hooks.");
+	logger::info("________________________________________________");
 	return true;
 }

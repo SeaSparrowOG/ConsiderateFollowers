@@ -47,6 +47,7 @@ jobs:
 
     - name: Install
       run: |
+        cmake --install ${{ github.workspace }}/build --component "components" --config ${{ env.BUILD_TYPE }} --prefix ${{ github.workspace }}/ReleaseBuild
         cmake --install ${{ github.workspace }}/build --component "SKSEPlugin" --config ${{ env.BUILD_TYPE }} --prefix ${{ github.workspace }}/ReleaseBuild
 
     - name: Upload Artifact

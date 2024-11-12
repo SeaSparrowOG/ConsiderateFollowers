@@ -5,7 +5,7 @@ option(BUILD_TEST "Sets log level to debug." OFF)
 # -------- Project ----------
 project(
 	ConsiderateFollowers
-	VERSION 1.0.0
+	VERSION 1.2.0
 	LANGUAGES CXX
 )
 
@@ -78,12 +78,12 @@ install(
 )
 
 install(
-	FILES "${DATA_DIR}/SKSE/Plugins/ConsiderateFollowers.esp"
+	FILES "${DATA_DIR}/ConsiderateFollowers.esp"
 	DESTINATION "."
 )
 
 install(
-	FILES "${DATA_DIR}/SKSE/Plugins/ConsiderateFollowers.bsa"
+	FILES "${DATA_DIR}/ConsiderateFollowers.bsa"
 	DESTINATION "."
 )
 

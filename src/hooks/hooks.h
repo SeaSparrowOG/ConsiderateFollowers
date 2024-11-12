@@ -91,8 +91,9 @@ namespace Hooks {
 		static void thunk(RE::PlayerCharacter* a_this, float a_delta) {
 			func(a_this, a_delta);
 			const auto ui = RE::UI::GetSingleton();
-			assert(ui);
-			if (ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || DialogueItemConstructorCall::GetSingleton()->IsClosestActorSpeaking()) {
+			const auto singleton = DialogueItemConstructorCall::GetSingleton();
+			assert(ui && singleton);
+			if (ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || singleton->IsClosestActorSpeaking()) {
 				internalCounter = 0.0f;
 			}
 			else {

@@ -86,12 +86,13 @@ namespace Hooks {
 
 	bool DialogueItemConstructorCall::IsClosestActorSpeaking()
 	{
-		if (!closestSpeaker || !closestSpeaker->Is3DLoaded()) {
+		if (!closestSpeaker || closestSpeaker->IsDead() || !closestSpeaker->Is3DLoaded()) {
+			closestSpeaker = nullptr;
 			return false;
 		}
-
 		const auto speakerCharacter = closestSpeaker->As<RE::Character>();
-		if (!speakerCharacter) { 
+		if (!speakerCharacter) {
+			closestSpeaker = nullptr;
 			return false;
 		}
 
@@ -190,7 +191,7 @@ namespace Hooks {
 
 		const auto closestSpeakingCharacter = closestSpeaker ? closestSpeaker->As<RE::Character>() : nullptr;
 		bool isClosestActorSpeaking = closestSpeakingCharacter ? RE::IsTalking(closestSpeakingCharacter) : false;
-		if (isClosestActorSpeaking && closestSpeaker && closestSpeaker->Is3DLoaded()) {
+		if (isClosestActorSpeaking && closestSpeakingCharacter->Is3DLoaded()) {
 			const auto player = RE::PlayerCharacter::GetSingleton();
 			assert(player);
 			const auto distance = player->GetDistance(closestSpeaker);
