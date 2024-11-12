@@ -1,7 +1,7 @@
 install(
 	FILES
 		"${DATA_DIR}/SKSE/Plugins/ConsiderateFollowers.ini"
-	DESTINATION "ReleaseBuild/SKSE/Plugins"
+	DESTINATION "SKSE/Plugins"
 	COMPONENT components
 	EXCLUDE_FROM_ALL
 )
@@ -9,7 +9,7 @@ install(
 install(
 	FILES
 		"${DATA_DIR}/ConsiderateFollowers.esp"
-	DESTINATION "ReleaseBuild"
+	DESTINATION "."
 	COMPONENT components
 	EXCLUDE_FROM_ALL
 )
@@ -17,7 +17,7 @@ install(
 install(
 	FILES
 		"${DATA_DIR}/ConsiderateFollowers.bsa"
-	DESTINATION "ReleaseBuild"
+	DESTINATION "."
 	COMPONENT components
 	EXCLUDE_FROM_ALL
 )
