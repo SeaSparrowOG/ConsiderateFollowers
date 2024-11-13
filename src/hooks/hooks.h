@@ -36,13 +36,47 @@ namespace Hooks {
 
 			PendingDialogueResponse Process() {
 				const auto speakerCharacter = speaker->As<RE::Character>();
-				const auto speakerActor = speaker->As<RE::Actor>();
 				if (RE::IsTalking(speakerCharacter)) {
 					return kSkip;
 				}
+				auto newSoundHandle = RE::BSSoundHandle();
+				newSoundHandle.assumeSuccess = false;
+				newSoundHandle.soundID = RE::BSSoundHandle::kInvalidID;
+				newSoundHandle.state = RE::BSSoundHandle::AssumedState::kInitialized;
+				const auto player = RE::PlayerCharacter::GetSingleton();
+				assert(player);
 
-				Papyrus::EventDispatcher::GetSingleton()->followerShouldCommentate.QueueEvent(speakerActor, topic);
-				return kCompleted;
+				const auto isSleepingOrResting = RE::PlayerIsSleepingOrResting(player);
+				const auto speakerCurrentProcess = speakerCharacter->currentProcess ? RE::GetCharacterProcessLevel(speakerCharacter) : RE::PROCESS_TYPE::kNone;
+
+				if (!isSleepingOrResting && speakerCurrentProcess == RE::PROCESS_TYPE::kHigh) {
+					const auto handle = speakerCharacter->currentProcess->GetHeadtrackTarget();
+					const auto target = handle.get();
+					const auto targetActor = target.get() ? target.get()->As<RE::Actor>() : nullptr;
+
+					if (targetActor) {
+						speakerCharacter->currentProcess->SetHeadtrackTarget(targetActor, targetActor->editorLocCoord);
+					}
+					speakerCharacter->currentProcess->ClearActionHeadtrackTarget(false);
+					RE::ClearGreetingInfoData(speakerCharacter->currentProcess);
+
+					if (RE::PlayerIsSleepingOrResting(player) ||
+						speakerCurrentProcess != RE::PROCESS_TYPE::kHigh ||
+						(speakerCharacter->IsEssential() && speakerCharacter->GetLifeState() == RE::ACTOR_LIFE_STATE::kEssentialDown))
+					{
+						std::unique_ptr<RE::DialogueItem> dialogueItem(RE::CreateDialogueItem(topic, speaker));
+						if (dialogueItem) {
+							RE::DialogueItemFirstResponse(dialogueItem.get());
+							RE::RunResult(dialogueItem.get(), 0, false);
+							RE::RunResult(dialogueItem.get(), 1, false);
+						}
+					}
+					else {
+						RE::AIProcessProccessGreet(speakerCharacter->currentProcess, speakerCharacter, topic);
+					}
+				}
+
+				return kSkip;
 			}
 
 			bool HasValidData() {

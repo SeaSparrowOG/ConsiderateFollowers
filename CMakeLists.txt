@@ -5,7 +5,7 @@ option(BUILD_TEST "Sets log level to debug." OFF)
 # -------- Project ----------
 project(
 	ConsiderateFollowers
-	VERSION 1.2.0
+	VERSION 1.2.1
 	LANGUAGES CXX
 )
 
@@ -75,16 +75,6 @@ set(DATA_DIR "${PROJECT_SOURCE_DIR}/data")
 install(
 	FILES "${DATA_DIR}/SKSE/Plugins/ConsiderateFollowers.ini"
 	DESTINATION "SKSE/Plugins"
-)
-
-install(
-	FILES "${DATA_DIR}/ConsiderateFollowers.esp"
-	DESTINATION "."
-)
-
-install(
-	FILES "${DATA_DIR}/ConsiderateFollowers.bsa"
-	DESTINATION "."
 )
 
 include(components.cmake)

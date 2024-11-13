@@ -139,6 +139,9 @@ namespace Hooks {
 						logger::error("Caught {}", e.what());
 						return response;
 					}
+#ifdef DEBUG
+					RE::DebugNotification("Muzzled follower");
+#endif
 					delete a_this;
 					return nullptr;
 				}
