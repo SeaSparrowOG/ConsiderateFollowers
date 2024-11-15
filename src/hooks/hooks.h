@@ -74,6 +74,7 @@ namespace Hooks {
 					else {
 						RE::AIProcessProccessGreet(speakerCharacter->currentProcess, speakerCharacter, topic);
 					}
+					return kCompleted;
 				}
 
 				return kSkip;
