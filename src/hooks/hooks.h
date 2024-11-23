@@ -127,16 +127,17 @@ namespace Hooks {
 			func(a_this, a_delta);
 			const auto ui = RE::UI::GetSingleton();
 			const auto singleton = DialogueItemConstructorCall::GetSingleton();
-			assert(ui && singleton);
-			if (ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || singleton->IsClosestActorSpeaking()) {
-				internalCounter = 0.0f;
-			}
-			else {
-				internalCounter += a_delta;
-
-				if (internalCounter >= 3.0f) {
-					DialogueItemConstructorCall::GetSingleton()->ReleaseDialogueIfPossible();
+			if (ui && singleton) {
+				if (ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || singleton->IsClosestActorSpeaking()) {
 					internalCounter = 0.0f;
+				}
+				else {
+					internalCounter += a_delta;
+
+					if (internalCounter >= 3.0f) {
+						DialogueItemConstructorCall::GetSingleton()->ReleaseDialogueIfPossible();
+						internalCounter = 0.0f;
+					}
 				}
 			}
 		}
