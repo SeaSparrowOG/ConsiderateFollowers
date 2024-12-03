@@ -124,7 +124,6 @@ namespace Hooks {
 		}
 
 		static void thunk(RE::PlayerCharacter* a_this, float a_delta) {
-			func(a_this, a_delta);
 			const auto ui = RE::UI::GetSingleton();
 			const auto singleton = DialogueItemConstructorCall::GetSingleton();
 			if (ui && singleton) {
@@ -140,6 +139,7 @@ namespace Hooks {
 					}
 				}
 			}
+			func(a_this, a_delta);
 		}
 
 		inline static REL::Relocation<decltype(UpdateVFunc::thunk)> func;

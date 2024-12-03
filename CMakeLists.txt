@@ -5,7 +5,7 @@ option(BUILD_TEST "Sets log level to debug." OFF)
 # -------- Project ----------
 project(
 	ConsiderateFollowers
-	VERSION 1.2.2
+	VERSION 1.2.3
 	LANGUAGES CXX
 )
 
