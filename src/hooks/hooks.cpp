@@ -86,7 +86,7 @@ namespace Hooks {
 
 	bool DialogueItemConstructorCall::IsClosestActorSpeaking()
 	{
-		if (!closestSpeaker || closestSpeaker->IsDead() || !closestSpeaker->Is3DLoaded()) {
+		if (!closestSpeaker || !closestSpeaker->Is3DLoaded()) {
 			closestSpeaker = nullptr;
 			return false;
 		}
