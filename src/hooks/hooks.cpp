@@ -59,12 +59,12 @@ namespace Hooks {
 			return false;
 		}
 
-		const auto closestSpeakingCharacter = closestSpeaker ? closestSpeaker->As<RE::Character>() : nullptr;
+		const auto closestSpeakingCharacter = closestSpeaker.get().get() ? closestSpeaker.get()->As<RE::Character>() : nullptr;
 		bool isClosestActorSpeaking = closestSpeakingCharacter ? RE::IsTalking(closestSpeakingCharacter) : false;
-		if (isClosestActorSpeaking && closestSpeaker && closestSpeaker->Is3DLoaded()) {
+		if (isClosestActorSpeaking && closestSpeaker && closestSpeakingCharacter->Is3DLoaded()) {
 			const auto player = RE::PlayerCharacter::GetSingleton();
 			assert(player);
-			const auto distance = player->GetDistance(closestSpeaker);
+			const auto distance = player->GetDistance(closestSpeakingCharacter);
 			if (distance < maximumDistance) {
 				return false;
 			}
@@ -86,17 +86,20 @@ namespace Hooks {
 
 	bool DialogueItemConstructorCall::IsClosestActorSpeaking()
 	{
-		if (!closestSpeaker || !closestSpeaker->Is3DLoaded()) {
-			closestSpeaker = nullptr;
-			return false;
-		}
-		const auto speakerCharacter = closestSpeaker->As<RE::Character>();
-		if (!speakerCharacter) {
-			closestSpeaker = nullptr;
+		if (!closestSpeaker.get().get()) {
 			return false;
 		}
 
-		return (preventFollowerPileup || !closestSpeaker->IsPlayerTeammate())
+		const auto speakerActor = closestSpeaker.get().get();
+		if (speakerActor->IsDead() || !speakerActor->Is3DLoaded()) {
+			return false;
+		}
+		const auto speakerCharacter = speakerActor->As<RE::Character>();
+		if (!speakerCharacter) {
+			return false;
+		}
+
+		return (preventFollowerPileup || !speakerCharacter->IsPlayerTeammate())
 			&& RE::IsTalking(speakerCharacter);
 	}
 
@@ -192,12 +195,12 @@ namespace Hooks {
 			return false;
 		}
 
-		const auto closestSpeakingCharacter = closestSpeaker ? closestSpeaker->As<RE::Character>() : nullptr;
+		const auto closestSpeakingCharacter = closestSpeaker.get().get() ? closestSpeaker.get()->As<RE::Character>() : nullptr;
 		bool isClosestActorSpeaking = closestSpeakingCharacter ? RE::IsTalking(closestSpeakingCharacter) : false;
 		if (isClosestActorSpeaking && closestSpeakingCharacter->Is3DLoaded()) {
 			const auto player = RE::PlayerCharacter::GetSingleton();
 			assert(player);
-			const auto distance = player->GetDistance(closestSpeaker);
+			const auto distance = player->GetDistance(closestSpeakingCharacter);
 			if (distance < maximumDistance) {
 				return false;
 			}
@@ -221,24 +224,25 @@ namespace Hooks {
 			assert(player);
 			bool shouldReplace = false;
 			const auto oldSpeakerDone = !RE::IsTalking(speakerCharacter);
+			const auto closestSpeakerCharacter = closestSpeaker.get().get() ? closestSpeaker.get()->As<RE::Character>() : nullptr;
 			if (oldSpeakerDone) {
 				shouldReplace = true;
 			}
 			if (!shouldReplace) {
-				if (!closestSpeaker || !closestSpeaker->Is3DLoaded()) {
+				if (!closestSpeaker || !closestSpeakerCharacter->Is3DLoaded()) {
 					shouldReplace = true;
 				}
 			}
 			if (!shouldReplace) {
 				const auto newDistance = player->GetDistance(a_speaker);
-				const auto oldDistance = player->GetDistance(closestSpeaker);
+				const auto oldDistance = player->GetDistance(closestSpeakerCharacter);
 				if (newDistance < oldDistance) {
 					shouldReplace = true;
 				}
 			}
 
 			if (shouldReplace) {
-				closestSpeaker = a_speaker;
+				closestSpeaker = a_speaker->GetHandle();
 			}
 		}
 	}

@@ -110,7 +110,7 @@ namespace Hooks {
 
 		inline static REL::Relocation<decltype(&CreateDialogueItem)> _createDialogueItem;
 
-		RE::Actor* closestSpeaker{ nullptr };
+		RE::ActorHandle closestSpeaker;
 		float maximumDistance{ 500.0f };
 		bool preventFollowerPileup{ false };
 		std::vector<const RE::TESNPC*> whitelistedActors;
