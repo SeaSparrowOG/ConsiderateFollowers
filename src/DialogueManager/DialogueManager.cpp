@@ -20,9 +20,7 @@ namespace DialogueManager
 		}
 
 		bool isFollower = a_speaker->IsPlayerTeammate();
-		auto* highProcess = isFollower ? a_speaker->GetHighProcess() : nullptr;
-		bool talkingToPlayer = highProcess ? highProcess->talkingToPC : true;
-		if (talkingToPlayer) {
+		if (!isFollower) {
 			UpdateInternalConversation(a_speaker);
 			return true;
 		}
@@ -55,18 +53,24 @@ namespace DialogueManager
 			break;
 		}
 
-		if (IsClosestActorSpeaking()) {
+		auto dialogueManager = RE::MenuTopicManager::GetSingleton();
+		auto dialogueTarget = dialogueManager ? dialogueManager->speaker.get() : nullptr;
+		auto* dialogueActor = dialogueTarget && dialogueTarget.get() ? dialogueTarget->As<RE::Actor>() : nullptr;
+		bool isDialogueTarget = dialogueTarget ? dialogueActor == a_speaker : false;
+		if ((dialogueActor && !isDialogueTarget) || IsClosestActorSpeaking()) {
+			auto witheldDialogue = StoredDialogue(a_speaker, a_topic);
+			if (witheldDialogue.Preserve()) {
+				pendingDialogue.push_back(witheldDialogue);
+			}
 			return false;
 		}
+
 		UpdateInternalConversation(a_speaker);
 		return true;
 	}
 
 	void Manager::UpdateInternalConversation(RE::Actor* a_speaker) {
-		if (a_speaker->IsPlayerRef()) {
-			return;
-		}
-		if (!preventPileUp && a_speaker->IsPlayerTeammate()) {
+		if (a_speaker->IsPlayerRef() || !a_speaker->Is3DLoaded()) {
 			return;
 		}
 
@@ -131,22 +135,31 @@ namespace DialogueManager
 	}
 
 	void Manager::Run() {
+		if (pendingDialogue.empty()) {
+			return;
+		}
+
 		auto* player = RE::PlayerCharacter::GetSingleton();
 		bool playerBusy = player ? RE::PlayerIsSleepingOrResting(player) : true;
-		if (playerBusy) {
+		if (playerBusy || IsClosestActorSpeaking()) {
 			return;
 		}
 
-		if (IsClosestActorSpeaking()) {
+		auto dialogueManager = RE::MenuTopicManager::GetSingleton();
+		auto dialogueTarget = dialogueManager ? dialogueManager->speaker.get() : nullptr;
+		auto* dialogueActor = dialogueTarget && dialogueTarget.get() ? dialogueTarget->As<RE::Actor>() : nullptr;
+		if (dialogueActor || IsClosestActorSpeaking()) {
 			return;
 		}
-
-		for (auto& internalDialogue : pendingDialogue) {
-			internalDialogue.Process();
-		}
+		pendingDialogue.back().Process();
 	}
 
 	void Manager::Dispose() {
+		if (pendingDialogue.empty()) {
+			queued = false;
+			return;
+		}
+
 		auto newStoredDialogue = std::vector<StoredDialogue>();
 		newStoredDialogue.reserve(pendingDialogue.size());
 
@@ -165,6 +178,7 @@ namespace DialogueManager
 		if (queued) {
 			return;
 		}
+
 		auto* interface = SKSE::GetTaskInterface();
 		auto* tasklet = reinterpret_cast<::TaskDelegate*>(this);
 		if (!interface || !tasklet) {
@@ -174,7 +188,7 @@ namespace DialogueManager
 		interface->AddTask(tasklet);
 	}
 
-	bool Manager::IsClosestActorSpeaking() {
+	bool Manager::IsClosestActorSpeaking() const {
 		auto* player = RE::PlayerCharacter::GetSingleton();
 		if (!player || closestSpeakerID == 0) {
 			return false;

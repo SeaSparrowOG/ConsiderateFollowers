@@ -32,5 +32,6 @@ namespace Hooks {
 		static constexpr std::size_t idx{ 0xAD }; //Update
 
 		inline static float internalCounter{ 0.0f };
+		inline static float timeBetweenAttempts{ 10.0f };
 	};
 }

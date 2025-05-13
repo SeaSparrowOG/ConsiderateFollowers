@@ -53,12 +53,14 @@ namespace Hooks {
 	inline void PlayerUpdateListener::Thunk(RE::PlayerCharacter* a_this, float a_delta) {
 		_func(a_this, a_delta);
 		internalCounter += std::max(0.0f, a_delta);
-		if (internalCounter >= 3.0f) {
+		if (internalCounter >= timeBetweenAttempts) {
 			auto* manager = DialogueManager::Manager::GetSingleton();
 			if (manager) {
 				manager->QueueTask();
 			}
+			internalCounter = 0.0f;
 		}
+		internalCounter = std::clamp(internalCounter, 0.0f, timeBetweenAttempts);
 	}
 
 	RE::DialogueItem* DialogueItemConstructorCall::Thunk(
@@ -79,7 +81,6 @@ namespace Hooks {
 		{
 			return response;
 		}
-
 		delete a_this;
 		return nullptr;
 	}

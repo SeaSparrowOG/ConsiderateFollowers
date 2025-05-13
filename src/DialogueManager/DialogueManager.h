@@ -22,7 +22,7 @@ namespace DialogueManager
 		void QueueTask();
 
 	private:
-		bool IsClosestActorSpeaking();
+		bool IsClosestActorSpeaking() const;
 
 		std::unordered_set<const RE::TESNPC*> whitelistedNPCs{};
 		std::vector<StoredDialogue>           pendingDialogue;
