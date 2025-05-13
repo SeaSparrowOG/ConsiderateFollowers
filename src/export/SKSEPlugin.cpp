@@ -1,6 +1,9 @@
-#include "hooks/hooks.h"
-#include "settings/INISettings.h"
-#include "settings/JSONSettings.h"
+#include "Hooks/Hooks.h"
+#include "Settings/INISettings.h"
+#include "Settings/JSONSettings.h"
+
+// The magical comment of "I Cannot be bothered for an empty commit"
+// It magically changes when I want to trigger a build action!
 
 namespace
 {
@@ -14,7 +17,7 @@ namespace
 		*path /= fmt::format("{}.log"sv, Plugin::NAME);
 		auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path->string(), true);
 
-#ifdef DEBUG
+#ifndef NDEBUG
 		const auto level = spdlog::level::debug;
 #else 
 		const auto level = spdlog::level::info;
@@ -25,7 +28,7 @@ namespace
 		log->flush_on(level);
 
 		spdlog::set_default_logger(std::move(log));
-		spdlog::set_pattern("%s(%#): [%^%l%$] %v"s);
+		spdlog::set_pattern("[%^%l%$] %v"s);
 	}
 }
 
@@ -65,12 +68,11 @@ static void MessageEventCallback(SKSE::MessagingInterface::Message* a_msg)
 {
 	switch (a_msg->type) {
 	case SKSE::MessagingInterface::kDataLoaded:
-		Settings::INI::Read();
-		logger::info("Finished applying INI settings.");
-		Settings::JSON::Read();
-		logger::info("Finished reading JSON settings.");
-		logger::info("________________________________________________");
-		logger::info("Finished startup tasks. Please enjoy your game!");
+		if (!Settings::JSON::Holder::GetSingleton()->Read()) {
+			SKSE::stl::report_and_fail("Failed to read JSON settings."sv);
+		}
+		logger::info("==========================================================");
+		logger::info("Startup tasks finished, enjoy your game!");
 		break;
 	default:
 		break;
@@ -80,23 +82,27 @@ static void MessageEventCallback(SKSE::MessagingInterface::Message* a_msg)
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
 	InitializeLog();
+	logger::info("=================================================");
 	logger::info("{} v{}"sv, Plugin::NAME, Plugin::VERSION.string());
-	logger::info("Author: SeaSparrow");
-	logger::info("________________________________________________");
+	logger::info("Author: SeaSparrow"sv);
+	logger::info("=================================================");
 	SKSE::Init(a_skse);
-	SKSE::AllocTrampoline(14); // Calls: 1
 
 	const auto ver = a_skse->RuntimeVersion();
 	if (ver < SKSE::RUNTIME_1_6_1130) {
 		return false;
 	}
 
+	logger::info("Performing startup tasks..."sv);
+	if (!Settings::INI::Holder::GetSingleton()->Read()) {
+		SKSE::stl::report_and_fail("Failed to read INI settings."sv);
+	}
+	if (!Hooks::Install()) {
+		SKSE::stl::report_and_fail("Failed to install necessary hooks."sv);
+	}
+
 	const auto messaging = SKSE::GetMessagingInterface();
 	messaging->RegisterListener(&MessageEventCallback);
-	SKSE::GetPapyrusInterface()->Register(Papyrus::RegisterFunctions);
-	logger::info("Installed new Papyrus functions.");
-	Hooks::Install();
-	logger::info("Installed hooks.");
-	logger::info("________________________________________________");
+
 	return true;
 }

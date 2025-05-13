@@ -55,3 +55,28 @@ namespace stl {
         return reinterpret_cast<std::uintptr_t>((void*&)fn);
     }
 }
+
+// TODO: Remove this from here
+template <class T>
+class ISingleton
+{
+public:
+    static T* GetSingleton()
+    {
+        static T singleton;
+        return std::addressof(singleton);
+    }
+
+    ISingleton(const ISingleton&) = delete;
+    ISingleton(ISingleton&&) = delete;
+    ISingleton& operator=(const ISingleton&) = delete;
+    ISingleton& operator=(ISingleton&&) = delete;
+
+protected:
+    ISingleton() = default;
+    ~ISingleton() = default;
+};
+
+// Used as a compile guard in certain templated function (see INISettings.h, if present)
+template <class T>
+inline constexpr bool always_false = false;

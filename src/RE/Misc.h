@@ -2,8 +2,6 @@
 
 #include "RE/Offset.h"
 
-#include "utilities/utilities.h"
-
 namespace RE
 {
 
