@@ -100,13 +100,13 @@ namespace DialogueManager
 	bool Manager::RequestINISettings() {
 		auto* iniManager = Settings::INI::Holder::GetSingleton();
 		if (!iniManager) {
-			logger::critical("  >Failed to get INI Manager."sv);
+			REX::CRITICAL("  >Failed to get INI Manager."sv);
 			return false;
 		}
 
 		auto preventPileUpRaw = iniManager->GetStoredSetting<bool>(iniManager->PREVENT_PILEUP_SETTING);
 		if (!preventPileUpRaw.has_value()) {
-			logger::error("  >Setting {} not found in INI settings, treating as false."sv, iniManager->PREVENT_PILEUP_SETTING);
+			REX::ERROR("  >Setting {} not found in INI settings, treating as false."sv, iniManager->PREVENT_PILEUP_SETTING);
 			preventPileUp = false;
 		}
 		else {
@@ -115,7 +115,7 @@ namespace DialogueManager
 
 		auto maxSpeakerDistanceRaw = iniManager->GetStoredSetting<float>(iniManager->MAX_DISTANCE_SETTING);
 		if (!maxSpeakerDistanceRaw.has_value()) {
-			logger::error("  >Setting {} not found in INI settings, treating as 500.0."sv, iniManager->MAX_DISTANCE_SETTING);
+			REX::ERROR("  >Setting {} not found in INI settings, treating as 500.0."sv, iniManager->MAX_DISTANCE_SETTING);
 			maximumDistance = 500.0f;
 		}
 		else {
@@ -180,7 +180,7 @@ namespace DialogueManager
 		}
 
 		auto* interface = SKSE::GetTaskInterface();
-		auto* tasklet = reinterpret_cast<::TaskDelegate*>(this);
+		auto* tasklet = reinterpret_cast<SKSE::TaskDelegate*>(this);
 		if (!interface || !tasklet) {
 			return;
 		}

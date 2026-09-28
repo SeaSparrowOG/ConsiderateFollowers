@@ -5,7 +5,7 @@ namespace Settings
 	namespace JSON
 	{
 		class Holder :
-			public ISingleton<Holder>
+			public REX::TSingleton<Holder>
 		{
 		public:
 			bool Read();

@@ -7,8 +7,8 @@
 namespace DialogueManager
 {
 	class Manager :
-		public ISingleton<Manager>,
-		public SKSE::detail::TaskDelegate
+		public REX::TSingleton<Manager>,
+		public SKSE::Impl::TaskDelegate
 	{
 	public:
 		bool AllowDialogue(RE::Actor* a_speaker, RE::TESTopic* a_topic);

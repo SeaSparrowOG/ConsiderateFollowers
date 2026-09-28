@@ -129,14 +129,14 @@ namespace
 namespace Settings::JSON
 {
 	bool Holder::Read() {
-		logger::info("==========================================================");
-		logger::info("JSON parser version: {}", parserVersion);
+		REX::INFO("==========================================================");
+		REX::INFO("JSON parser version: {}", parserVersion);
 		std::string jsonFolder = fmt::format(R"(.\Data\SKSE\Plugins\{})"sv, Plugin::NAME);
-		logger::info("Reading and validating project JSON files in {}.", jsonFolder);
+		REX::INFO("Reading and validating project JSON files in {}.", jsonFolder);
 
 		dataHandler = RE::TESDataHandler::GetSingleton();
 		if (!dataHandler) {
-			logger::critical("Failed to fetch data handler. This will likely cause a crash later, treating state as invalid."sv);
+			REX::CRITICAL("Failed to fetch data handler. This will likely cause a crash later, treating state as invalid."sv);
 			return false;
 		}
 
@@ -149,14 +149,14 @@ namespace Settings::JSON
 			}
 
 			std::sort(paths.begin(), paths.end());
-			logger::info("  >Found {} configuration files."sv, std::to_string(paths.size()));
+			REX::INFO("  >Found {} configuration files."sv, std::to_string(paths.size()));
 		}
 		catch (const std::exception& e) {
-			logger::error("Caught {} while reading files.", e.what());
+			REX::ERROR("Caught {} while reading files.", e.what());
 			return false;
 		}
 		if (paths.empty()) {
-			logger::info("No settings found");
+			REX::INFO("No settings found");
 			return true;
 		}
 
@@ -172,35 +172,35 @@ namespace Settings::JSON
 				}
 #endif
 				JSONReader.parse(rawJSON, JSONFile);
-				logger::info("  >Reading config {}..."sv, filename);
+				REX::INFO("  >Reading config {}..."sv, filename);
 				if (JSONFile.empty()) {
-					logger::warn("  >Failed to read config {}."sv, filename);
+					REX::WARN("  >Failed to read config {}."sv, filename);
 					continue;
 				}
 
 				try {
 					if (!ReadConfig(JSONFile)) {
-						logger::warn("  >Treating config as invalid, no settings will be applied."sv);
+						REX::WARN("  >Treating config as invalid, no settings will be applied."sv);
 						continue;
 					}
 				}
 				catch (Json::Exception& e) {
-					logger::error("    >Caught {} while reading file. File will be ignored."sv, e.what());
+					REX::ERROR("    >Caught {} while reading file. File will be ignored."sv, e.what());
 				}
 				catch (std::exception& e) {
-					logger::error("    >Caught unexpected exception {} while reading file. This should be reported to the mod page."sv, e.what());
+					REX::ERROR("    >Caught unexpected exception {} while reading file. This should be reported to the mod page."sv, e.what());
 				}
 			}
 			catch (const Json::Exception& e) {
-				logger::error("  >Caught {} while reading file.", e.what());
+				REX::ERROR("  >Caught {} while reading file.", e.what());
 				continue;
 			}
 			catch (const std::exception& e) {
-				logger::error("  >Caught unhandled exception {} while reading file.", e.what());
+				REX::ERROR("  >Caught unhandled exception {} while reading file.", e.what());
 				continue;
 			}
 		}
-		logger::info("Finished reading all settings."sv);
+		REX::INFO("Finished reading all settings."sv);
 		return true;
 	}
 
@@ -209,12 +209,12 @@ namespace Settings::JSON
 		const auto& minVersionField = a_json[MIN_VERSION_FIELD];
 		if (minVersionField) {
 			if (!minVersionField.isInt()) {
-				logger::warn("    >Config specified a minimum version, but the {} field is not a number."sv, MIN_VERSION_FIELD);
+				REX::WARN("    >Config specified a minimum version, but the {} field is not a number."sv, MIN_VERSION_FIELD);
 				return false;
 			}
 			const auto requiredVer = minVersionField.asInt();
 			if (requiredVer > parserVersion) {
-				logger::warn("    >Config specifies minimum version {}, but parser is version {}. Update {}."sv, requiredVer, parserVersion, Plugin::NAME);
+				REX::WARN("    >Config specifies minimum version {}, but parser is version {}. Update {}."sv, requiredVer, parserVersion, Plugin::NAME);
 				return false;
 			}
 		}
@@ -230,7 +230,7 @@ namespace Settings::JSON
 			}
 			DialogueManager::Manager::GetSingleton()->RegisterWhitelistedNPCs(configNPCs);
 		}
-		logger::warn("    >Config does not have a {} field. This is likely an error with the config."sv, WHITELIST_FIELD);
+		REX::WARN("    >Config does not have a {} field. This is likely an error with the config."sv, WHITELIST_FIELD);
 		return false;
 	}
 
@@ -243,7 +243,7 @@ namespace Settings::JSON
 		else if (a_json.isArray()) {
 			for (const auto& arrayNPC : a_json) {
 				if (!arrayNPC.isString()) {
-					logger::warn("    >Config contains non-string entry in {} field."sv, WHITELIST_FIELD);
+					REX::WARN("    >Config contains non-string entry in {} field."sv, WHITELIST_FIELD);
 					return false;
 				}
 				if (!ResolveNPC(arrayNPC)) {
@@ -252,12 +252,12 @@ namespace Settings::JSON
 			}
 		}
 		else {
-			logger::warn("    >Config contains {} field, but it is neither a string nor an array."sv, WHITELIST_FIELD);
+			REX::WARN("    >Config contains {} field, but it is neither a string nor an array."sv, WHITELIST_FIELD);
 			return false;
 		}
 
 		if (configNPCs.empty()) {
-			logger::info("  >Config resulted in no whitelisted NPCs. This may be normal."sv);
+			REX::INFO("  >Config resulted in no whitelisted NPCs. This may be normal."sv);
 			return true;
 		}
 		return true;
@@ -270,19 +270,19 @@ namespace Settings::JSON
 		if (!foundNPC.first) {
 			switch (foundNPC.second) {
 			case ErrorCode::kMissingPlugin:
-				logger::info("      >Entry {} specifies a plugin not in the load order. This is not a critical error."sv, jsonStringValue);
+				REX::INFO("      >Entry {} specifies a plugin not in the load order. This is not a critical error."sv, jsonStringValue);
 				break;
 			case ErrorCode::kMissingForm:
-				logger::warn("      >Entry {} specifies form in a plugin, but that plugin does not include that form."sv, jsonStringValue);
+				REX::WARN("      >Entry {} specifies form in a plugin, but that plugin does not include that form."sv, jsonStringValue);
 				break;
 			case ErrorCode::kBadCast:
-				logger::warn("      >Entry {} specifies form in a plugin, but the form in that plugin is NOT an actorbase."sv, jsonStringValue);
+				REX::WARN("      >Entry {} specifies form in a plugin, but the form in that plugin is NOT an actorbase."sv, jsonStringValue);
 				break;
 			case ErrorCode::kBadStringID:
-				logger::warn("      >Entry {} has an invalid formID."sv, jsonStringValue);
+				REX::WARN("      >Entry {} has an invalid formID."sv, jsonStringValue);
 				break;
 			default:
-				logger::warn("      >Failed to resolve entry {}."sv, jsonStringValue);
+				REX::WARN("      >Failed to resolve entry {}."sv, jsonStringValue);
 			}
 		}
 		else {

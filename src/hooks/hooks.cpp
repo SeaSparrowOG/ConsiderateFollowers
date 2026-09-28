@@ -5,27 +5,26 @@
 namespace Hooks {
 	bool Install()
 	{
-		SKSE::AllocTrampoline(14);
-		logger::info("Installing hooks, allocated 14 bytes to the trampoline."sv);
+		REX::INFO("Installing hooks, allocated 14 bytes to the trampoline."sv);
 
 		bool nominal = true;
 		auto* dialogueItemConstructorManager = DialogueItemConstructorCall::GetSingleton();
 		if (!dialogueItemConstructorManager) {
-			logger::critical("  >Failed to get manager singleton for the Dialogue Item Ctor manager."sv);
+			REX::CRITICAL("  >Failed to get manager singleton for the Dialogue Item Ctor manager."sv);
 			nominal = false;
 		}
 		auto* playerUpdateManager = PlayerUpdateListener::GetSingleton();
 		if (!playerUpdateManager) {
-			logger::critical("  >Failed to get manager singleton for the Player Update manager."sv);
+			REX::CRITICAL("  >Failed to get manager singleton for the Player Update manager."sv);
 			nominal = false;
 		}
 		if (!nominal) {
 			return false;
 		}
 
-		logger::info("  >Installing Dialogue Item Ctor manager..."sv);
+		REX::INFO("  >Installing Dialogue Item Ctor manager..."sv);
 		bool installedCtorPatch = dialogueItemConstructorManager->Install();
-		logger::info("  >Installing Player Update manager..."sv);
+		REX::INFO("  >Installing Player Update manager..."sv);
 		bool installedPlayerUpdatePatch = playerUpdateManager->Install();
 
 		return installedPlayerUpdatePatch && installedCtorPatch;
@@ -33,11 +32,11 @@ namespace Hooks {
 
 	bool DialogueItemConstructorCall::Install()
 	{
-		auto& trampoline = SKSE::GetTrampoline();
+		auto& trampoline = REL::GetTrampoline();
 
 		REL::Relocation<std::uintptr_t> target{ REL::ID(25541), 0xE2 };
-		if (!REL::make_pattern<"E8">().match(target.address())) {
-			logger::critical("  >Failed to match pattern for 25541 + 0xE2."sv);
+		if (!REL::Pattern<"E8">().match(target.address())) {
+			REX::CRITICAL("  >Failed to match pattern for 25541 + 0xE2."sv);
 			return false;
 		}
 		_func = trampoline.write_call<5>(target.address(), &Thunk);
