@@ -134,6 +134,10 @@ namespace Settings::JSON
 		std::string jsonFolder = fmt::format(R"(.\Data\SKSE\Plugins\{})"sv, Plugin::NAME);
 		REX::INFO("Reading and validating project JSON files in {}.", jsonFolder);
 
+		if (!std::filesystem::is_directory(jsonFolder)) {
+			REX::INFO("  >No configs folder."sv);
+			return true;
+		}
 		dataHandler = RE::TESDataHandler::GetSingleton();
 		if (!dataHandler) {
 			REX::CRITICAL("Failed to fetch data handler. This will likely cause a crash later, treating state as invalid."sv);
