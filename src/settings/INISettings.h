@@ -5,7 +5,7 @@ namespace Settings
 	namespace INI
 	{
 		class Holder : 
-			public ISingleton<Holder>
+			public REX::TSingleton<Holder>
 		{
 		public:
 			bool Read();

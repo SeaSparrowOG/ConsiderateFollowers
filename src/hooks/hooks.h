@@ -4,7 +4,7 @@ namespace Hooks {
 	bool Install();
 
 	class DialogueItemConstructorCall :
-		public ISingleton<DialogueItemConstructorCall> {
+		public REX::TSingleton<DialogueItemConstructorCall> {
 	public:
 		bool Install();
 
@@ -21,7 +21,7 @@ namespace Hooks {
 	};
 
 	class PlayerUpdateListener :
-		public ISingleton<PlayerUpdateListener>
+		public REX::TSingleton<PlayerUpdateListener>
 	{
 	public:
 		bool Install();
